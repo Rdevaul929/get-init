@@ -46,7 +46,5 @@ def main():
 if __name__ == '__main__':
     main()
 
-git init
-git add .
-git commit -m "initial commit: download PDFs from Drive"
+
 
