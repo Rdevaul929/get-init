@@ -1,50 +1,29 @@
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-import requests
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
 import os
-# If modifying scopes, delete token.json first
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
-# Folder ID from your URL
-FOLDER_ID = '1cuXVilrJSORTU-Jkm3x-qif2tu6FyiY-'
-
-def download_file(service, file_id, file_name):
-    request = service.files().get_media(fileId=file_id)
-    filepath = os.path.join(os.getcwd(), file_name)
-    with open(filepath, 'wb') as f:
-        downloader = request.Request()
-        response = service._http.request(request.uri)
-        f.write(response[1])
-    print(f"Downloaded: {file_name}")
-    
 def main():
-    # Authenticate
-    flow = InstalledAppFlow.from_client_secrets_file(
-        'client_secrets.json', SCOPES)
-    creds = flow.run_local_server(port=8080)
+    gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()  # Opens a browser to authenticate
+    drive = GoogleDrive(gauth)
 
-    # Build service
-    service = build('drive', 'v3', credentials=creds)
+    folder_id = '1cuXVilrJSORTU-Jkm3x-qif2tu6FyiY-'  # Replace this!
 
-    # Print authenticated email
-    user_info = service.about().get(fields='user').execute()
-    print("Authenticated as:", user_info['user']['emailAddress'])
+    # List files in the folder
+    file_list = drive.ListFile({'q': f"'{folder_id}' in parents and trashed=false"}).GetList()
+    print("Files in folder:")
+    for file in file_list:
+        print(f'{file["title"]} ({file["id"]})')
 
-    # Query files in folder
-    query = f"'{FOLDER_ID}' in parents and trashed = false"
-    results = service.files().list(q=query, fields="files(id, name)").execute()
-    items = results.get('files', [])
+    # Download PDF files
+    for file in file_list:
+        if file['title'].lower().endswith('.pdf'):
+            print(f"Downloading {file['title']}...")
+            file.GetContentFile(file['title'])
 
-    if not items:
-        print("No files found.")
-    else:
-        print("Files in folder:")
-        for item in items:
-            print(f"{item['name']} ({item['id']})")
+    # Check your local directory for downloaded files
+    print("\nFiles in current directory:")
+    print(os.listdir())
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
-
