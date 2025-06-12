@@ -1,7 +1,8 @@
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 import os
-
+if not os.path.exists('downloads'):
+    os.makedirs('downloads')
 def main():
     gauth = GoogleAuth()
     gauth.LocalWebserverAuth()  # Opens a browser to authenticate
@@ -19,7 +20,7 @@ def main():
     for file in file_list:
         if file['title'].lower().endswith('.pdf'):
             print(f"Downloading {file['title']}...")
-            file.GetContentFile(file['title'])
+            file.GetContentFile(f"downloads/{file['title']}")
 
     # Check your local directory for downloaded files
     print("\nFiles in current directory:")
